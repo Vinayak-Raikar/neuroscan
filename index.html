@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brain Tumor Detection | MRI Image Analysis</title>
+<meta name="description" content="Upload an MRI scan and highlight tumor-like regions using image processing. Runs fully in your browser.">
+<meta name="theme-color" content="#0b1020">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <nav class="navbar" id="navbar">
+    <a href="#home" class="nav-logo">🧠 NeuroScan</a>
+    <div class="nav-links">
+      <a href="#detect">Detect</a>
+      <a href="#how">How it works</a>
+      <a href="#team">Team</a>
+    </div>
+    <button id="themeToggle" class="theme-btn" aria-label="Toggle theme">🌙</button>
+  </nav>
+
+  <header class="hero reveal" id="home">
+    <div class="hero-pill">Image processing &middot; Runs in your browser</div>
+    <h1>Brain Tumor <span>Detection</span></h1>
+    <p class="typing"><span id="typed"></span><span class="cursor">|</span></p>
+    <a href="#detect" class="btn hero-btn">Start scanning ↓</a>
+  </header>
+
+  <main class="container">
+    <section id="detect" class="section">
+      <section class="team" id="team"></section>
+      <h2 class="section-title">Scan an <span>MRI image</span></h2>
+
+      <div class="card reveal">
+        <div id="dropZone" class="drop-zone" tabindex="0">
+          <div class="scan-line"></div>
+          <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.bmp,.webp" hidden>
+          <div id="dropContent">
+            <div class="drop-icon">⬆</div>
+            <p class="drop-title">Drag &amp; drop your MRI image here</p>
+            <p class="drop-sub">or click to browse &middot; JPG, PNG, BMP &middot; (convert TIF to JPG first)</p>
+          </div>
+          <img id="preview" class="preview" alt="Preview" hidden>
+        </div>
+        <p id="fileName" class="file-name"></p>
+
+        <div id="scanStatus" class="scan-status" hidden>
+          <div class="scan-bar"><div id="scanFill"></div></div>
+          <p id="scanText">Preparing image...</p>
+        </div>
+
+        <div class="slider-box">
+          <label for="sensitivity">
+            Minimum region size: <strong id="sensValue">1.0</strong>% of brain
+          </label>
+          <input type="range" id="sensitivity" min="0.5" max="5" step="0.5" value="1">
+          <small>Lower = more sensitive (finds more, but more false alarms). Higher = stricter.</small>
+        </div>
+
+        <button id="analyzeBtn" class="btn" disabled>Analyze Image</button>
+        <p id="errorMsg" class="error" hidden></p>
+      </div>
+
+      <div id="results" class="card results" hidden>
+        <div id="badge" class="badge"></div>
+        <p id="ratioText" class="ratio-text"></p>
+
+        <div class="stats">
+          <div class="stat"><div class="stat-value" id="statRatio">0%</div><div class="stat-label">Bright region size</div></div>
+          <div class="stat"><div class="stat-value" id="statBrain">-</div><div class="stat-label">Brain area</div></div>
+          <div class="stat"><div class="stat-value" id="statResult">-</div><div class="stat-label">Result</div></div>
+        </div>
+
+        <h3 class="sub-title">Drag to compare</h3>
+        <div class="compare" id="cmp">
+          <canvas id="cmpAfter" width="256" height="256"></canvas>
+          <canvas id="cmpBefore" width="256" height="256"></canvas>
+          <span class="compare-tag left">Original</span>
+          <span class="compare-tag right">Detected</span>
+          <div class="compare-line"></div>
+          <input type="range" id="cmpSlider" min="0" max="100" value="50" aria-label="Compare original and detected image">
+        </div>
+
+        <div class="grid">
+          <figure><canvas id="cOriginal" width="256" height="256"></canvas><figcaption>Uploaded image</figcaption></figure>
+          <figure><canvas id="cRegion" width="256" height="256"></canvas><figcaption>Detected bright region</figcaption></figure>
+          <figure><canvas id="cOverlay" width="256" height="256"></canvas><figcaption>Result (red = suspected)</figcaption></figure>
+        </div>
+
+        <div class="result-actions">
+          <button id="downloadBtn" class="btn small">⬇ Download result</button>
+          <button id="rescanBtn" class="btn small ghost">↻ Scan another image</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section">
+      <h2 class="section-title">How it <span>works</span></h2>
+      <div class="steps reveal">
+        <div class="step tilt"><div class="step-num">1</div><h3>Upload</h3><p>Choose an MRI image. It never leaves your computer.</p></div>
+        <div class="step tilt"><div class="step-num">2</div><h3>Find the brain</h3><p>The brain area is separated from the background and skull edges.</p></div>
+        <div class="step tilt"><div class="step-num">3</div><h3>Spot bright areas</h3><p>Unusually bright regions inside the brain are located.</p></div>
+        <div class="step tilt"><div class="step-num">4</div><h3>Get the result</h3><p>The biggest region is measured and outlined in red.</p></div>
+      </div>
+    </section>
+
+    <section id="team" class="section team reveal">
+      <h2 class="section-title">Team <span>Members</span></h2>
+      <p class="team-sub">Group project made by</p>
+
+      <div class="team-grid">
+        <div class="member tilt">
+          <div class="member-photo"><img src="C:\Users\Vinayak Raikar\Downloads\VINAYAK.jpg.jpeg" alt="Member 1" onerror="this.remove()"></div>
+          <h3>VINAYAK K RAIKAR</h3><p>Role (IDEA CREATER)</p>
+        </div>
+        <div class="member tilt">
+          <div class="member-photo"><span>B</span><img src="C:\Users\Vinayak Raikar\Downloads\koushik s.jpg.jpeg" alt="Member 2" onerror="this.remove()"></div>
+          <h3>KOUSHIK S NAIKe</h3><p>Role (SOLUTION FINDERl)</p>
+        </div>
+        <div class="member tilt">
+          <div class="member-photo"><span>C</span><img src="C:\Users\Vinayak Raikar\Downloads\gagaram.jpg.jpeg" alt="Member 3" onerror="this.remove()"></div>
+          <h3>GANGARAM G GURAV</h3><p>Role (PROMPT EXPERT)</p>
+        </div>
+        <div class="member tilt">
+          <div class="member-photo"><span>D</span><img src="C:\Users\Vinayak Raikar\Downloads\sanjay.jpg.jpeg" alt="Member 4" onerror="this.remove()"></div>
+          <h3>SANJAY P P</h3><p>Role (WEBSITE MAKER)</p>
+        </div>
+        <div class="member tilt">
+          <div class="member-photo"><span>E</span><img src="C:\Users\Vinayak Raikar\Downloads\karthik.jpg.jpeg" alt="Member 5" onerror="this.remove()"></div>
+          <h3>U KARTHIK</h3><p>Role (WEBSITE LAUNCHER)</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>Brain Tumor Detection</strong>
+      <p>Group project &middot; Image processing &middot; HTML, CSS, JavaScript</p>
+    </div>
+    <nav class="footer-links">
+      <a href="#detect">Detect</a>
+      <a href="#team">Team</a>
+      <a href="https://github.com/your-username/your-repo" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+  </div>
+  <p class="footer-note">Educational project only. Not a medical device and not a medical diagnosis.</p>
+  <p class="footer-copy">&copy; 2026 Team Name. All rights reserved.</p>
+</footer>
+ <script src="script.js"></script>
+<script src="debug.js"></script>
+ <script>
+document.querySelectorAll("nav a, #navbar a").forEach(function (a) {
+  a.addEventListener("click", function (e) {
+    var href = a.getAttribute("href") || "";
+    if (href.charAt(0) !== "#" || href === "#") return;
+    var target = document.querySelector(href);
+    if (!target) { alert("No section found with id " + href); return; }
+    e.preventDefault();
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+</script>
+<button id="toTop" class="to-top" aria-label="Back to top" title="Back to top">&uarr;</button>
+<script>
+(function () {
+  var b = document.getElementById("toTop");
+  window.addEventListener("scroll", function () {
+    b.classList.toggle("show", window.scrollY > 400);
+  });
+  b.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+})();
+</script>
+</body>
+</html>
